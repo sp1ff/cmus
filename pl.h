@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2008-2013 Various Authors
  * Copyright 2006 Timo Hirvonen
@@ -40,6 +41,8 @@ void pl_export_selected_pl(const char *path);
 struct searchable *pl_get_searchable(void);
 int pl_add_file_to_marked_pl(const char *file);
 void pl_add_track_to_marked_pl(struct track_info *ti);
+void pl_load_all(void);
+void pl_reload(void);
 void pl_rename_selected_pl(const char *name);
 void pl_create(const char *name);
 void pl_get_sort_str(char *buf, size_t size);

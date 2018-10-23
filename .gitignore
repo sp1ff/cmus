@@ -22,3 +22,7 @@ cscope.out
 /cmus.base
 /cmus.def
 /cmus.exp
+GPATH
+GRTAGS
+GSYMS
+GTAGS

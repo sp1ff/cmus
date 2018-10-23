@@ -1268,6 +1268,11 @@ static void cmd_pl_export(char *arg)
 		info_msg(":pl-export only works in view 3");
 }
 
+static void cmd_pl_flush(char *arg)
+{
+	pl_save();
+}
+
 static char *get_browser_add_file(void)
 {
 	char *sel = browser_get_sel();
@@ -1296,6 +1301,11 @@ static void cmd_pl_import(char *arg)
 		pl_import(name);
 		free(name);
 	}
+}
+
+static void cmd_pl_reload(char *arg)
+{
+	pl_reload();
 }
 
 static void cmd_pl_rename(char *arg)
@@ -2552,7 +2562,9 @@ struct command commands[] = {
 	{ "right-view",            cmd_right_view,       0, 0,  NULL,                 0, 0          },
 	{ "pl-create",             cmd_pl_create,        1, -1, NULL,                 0, 0          },
 	{ "pl-export",             cmd_pl_export,        1, -1, NULL,                 0, 0          },
+	{ "pl-flush",              cmd_pl_flush,         0, 0,  NULL,                 0, 0          },
 	{ "pl-import",             cmd_pl_import,        0, -1, NULL,                 0, 0          },
+	{ "pl-reload",             cmd_pl_reload,        0, 0,  NULL,                 0, 0          },
 	{ "pl-rename",             cmd_pl_rename,        1, -1, NULL,                 0, 0          },
 	{ "push",                  cmd_push,             1, -1, expand_commands,      0, 0          },
 	{ "pwd",                   cmd_pwd,              0, 0,  NULL,                 0, 0          },

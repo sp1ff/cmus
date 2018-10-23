@@ -470,9 +470,16 @@ pl-create <name>
 pl-export <filename>
 	Exports the currently selected playlist.
 
+pl-flush
+	Writes all playlists to disk (in the same manner as when cmus exists)
+
 pl-import [filename]
 	Imports a playlist into the playlist view. The argument can be omitted in
 	the browser view.
+
+pl-reload
+	Re-load all playlists in the playlists directory; playlists created within
+	cmus that have not yet been saved to disk will not be affected.
 
 pl-rename <name>
 	Renames the selected playlist.
@@ -1531,6 +1538,9 @@ CMUS_CHARSET
 
 CMUS_HOME
 	Override cmus config directory (default: $XDG_CONFIG_HOME/cmus).
+
+CMUS_PLAYLIST_DIR
+	Override the cmus playlist directory (default: $XDG_CONFIG_HOME/cmus/playlists).
 
 CMUS_SOCKET
 	Override cmus socket path (default: $XDG_RUNTIME_DIR/cmus-socket).
