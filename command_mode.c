@@ -408,6 +408,11 @@ static void cmd_save(char *arg)
 	view_save(flag_to_view(flag), arg, to_stdout, flag == 'L', extended);
 }
 
+struct send_to_pl_ctx {
+	const char *pl_name;
+	int create;
+};
+
 static void cmd_set(char *arg)
 {
 	char *value = NULL;
@@ -1454,6 +1459,46 @@ struct wrapper_cb_data {
 	add_ti_cb cb;
 };
 
+static int _send_to_pl(void *data, struct track_info *ti)
+{
+	struct send_to_pl_ctx *ctx = (struct send_to_pl_ctx*)data;
+	return pl_send(ctx->pl_name, ti, ctx->create);
+}
+
+static void cmd_send_to_pl(char *arg)
+{
+	int create = 0, current_track = 0, f;
+	do {
+		f = parse_one_flag((const char **)&arg, "ct");
+		if (f == 'c')
+			create = 1;
+		else if (f == 't')
+			current_track = 1;
+	} while (f > 0);
+
+	if (f == -1)
+		return;
+
+	if (arg == NULL) {
+		error_msg("not enough arguments; expected playlist\n");
+		return;
+	}
+
+	if (current_track) {
+		if (lib_cur_track != NULL)
+			pl_send(arg, lib_cur_track->shuffle_track.simple_track.info, create);
+		else
+			error_msg("no current track\n");
+	}
+	else if (cur_view <= QUEUE_VIEW) {
+		struct send_to_pl_ctx ctx = { arg, create };
+		view_for_each_sel[cur_view](_send_to_pl, &ctx, 0);
+	}
+	else {
+		error_msg("can't send marked tracks in this view\n");
+	}
+}
+
 /* wrapper for void lib_add_track(struct track_info *) etc. */
 static int wrapper_cb(void *data, struct track_info *ti)
 {
@@ -2461,6 +2506,41 @@ static void expand_options(const char *str)
 	}
 }
 
+static void expand_send_to_pl(const char *str)
+{
+	const char *p = str;
+
+	int f, create = 0, current_track = 0;
+	do {
+		f = parse_one_flag(&str, "ct");
+		if (f == 'c')
+			create = 1;
+		else if (f == 't')
+			current_track = 1;
+	} while (f > 0);
+
+	if (f == -1 || create)
+		return;
+
+	size_t n;
+	if (str == NULL) {
+		n = strlen(p);
+		str = "";
+	}
+	else {
+		n = str - p;
+	}
+
+	pl_expand(str);
+
+	if (tabexp.head && (create || current_track)) {
+		strncpy(expbuf, p, n);
+		snprintf(expbuf + n, sizeof(expbuf) - n, "%s", tabexp.head);
+		free(tabexp.head);
+		tabexp.head = xstrdup(expbuf);
+	}
+}
+
 static void expand_toptions(const char *str)
 {
 	struct cmus_opt *opt;
@@ -2579,6 +2659,7 @@ struct command commands[] = {
 	{ "search-prev",           cmd_search_prev,      0, 0,  NULL,                 0, 0          },
 	{ "search-start",          cmd_search_start,     0, 0,  NULL,                 0, 0          },
 	{ "seek",                  cmd_seek,             1, 1,  NULL,                 0, 0          },
+	{ "send",                  cmd_send_to_pl,       1, 1,  expand_send_to_pl,    0, 0          },
 	{ "set",                   cmd_set,              1, 1,  expand_options,       0, 0          },
 	{ "shell",                 cmd_shell,            1, -1, expand_program_paths, 0, CMD_UNSAFE },
 	{ "showbind",              cmd_showbind,         1, 1,  expand_unbind_args,   0, 0          },

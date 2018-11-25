@@ -25,6 +25,7 @@
 #include "list.h"
 #include "job.h"
 #include "misc.h"
+#include "tabexp.h"
 #include "ui_curses.h"
 #include "xstrjoin.h"
 #include "worker.h"
@@ -198,6 +199,23 @@ static void pl_free(struct playlist *pl)
 	free(pl);
 }
 
+/*
+ * Find the playlist struct corresponding to a given name. Return null if no
+ * such playlist exists. Note that `name' is stricly the playlist name, not the
+ * full path to the file.
+ *
+ */
+
+static struct playlist *pl_for_name(const char *name)
+{
+	struct playlist *pl;
+	list_for_each_entry(pl, &pl_head, node) {
+		if (strcmp(pl->name, name) == 0)
+			return pl;
+	}
+	return 0;
+}
+
 static void pl_add_track(struct playlist *pl, struct track_info *ti)
 {
 	struct shuffle_track *track = xnew(struct shuffle_track, 1);
@@ -211,6 +229,27 @@ static void pl_add_track(struct playlist *pl, struct track_info *ti)
 static void pl_add_cb(struct track_info *ti, void *opaque)
 {
 	pl_add_track(opaque, ti);
+}
+
+int pl_send(const char *pl_name, struct track_info *ti, int create)
+{
+	struct playlist *pl = pl_for_name(pl_name);
+	if (pl == NULL) {
+		if (create == 0) {
+			error_msg("playlist '%s' does not exist\n", pl_name);
+			return 1;
+		}
+		else {
+			pl = pl_new(pl_name);
+			char *full = pl_name_to_pl_file(pl_name);
+			cmus_add(pl_add_cb, full, FILE_TYPE_PL, JOB_TYPE_PL, 0, pl);
+			list_add_tail(&pl->node, &pl_head);
+			free(full);
+		}
+	}
+
+	pl_add_track(pl, ti);
+	return 0;
 }
 
 int pl_add_file_to_marked_pl(const char *file)
@@ -269,23 +308,6 @@ void pl_load_all(void)
 		pl_load_one(file);
 	}
 	dir_close(&dir);
-}
-
-/*
- * Find the playlist struct corresponding to a given name. Return null if no
- * such playlist exists. Note that `name' is stricly the playlist name, not the
- * full path to the file.
- *
- */
-
-static struct playlist *pl_for_name(const char *name)
-{
-	struct playlist *pl;
-	list_for_each_entry(pl, &pl_head, node) {
-		if (strcmp(pl->name, name) == 0)
-			return pl;
-	}
-	return 0;
 }
 
 static void pl_create_default(void)
@@ -675,6 +697,25 @@ void pl_export_selected_pl(const char *path)
 	if (access(tmp, F_OK) != 0 || yes_no_query("File exists. Overwrite? [y/N]"))
 		cmus_save(pl_save_cb, tmp, pl_visible);
 	free(tmp);
+}
+
+void pl_expand(const char *str)
+{
+	PTR_ARRAY(array);
+
+	size_t len = strlen(str);
+	struct playlist *pl;
+	list_for_each_entry(pl, &pl_head, node) {
+		if (!strncmp(pl->name, str, len)) {
+			ptr_array_add(&array, xstrdup(pl->name + len));
+		}
+	}
+	if (!array.count)
+		return;
+
+	tabexp.head = xstrdup(str);
+	tabexp.tails = array.ptrs;
+	tabexp.count = array.count;
 }
 
 struct searchable *pl_get_searchable(void)
