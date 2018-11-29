@@ -306,6 +306,7 @@ enum {
 	TF_SHUFFLE,
 	TF_PLAYLISTMODE,
 	TF_BPM,
+	TF_RATING,
 
 	NR_TFS
 };
@@ -364,6 +365,7 @@ static struct format_option track_fopts[NR_TFS + 1] = {
 	DEF_FO_STR('\0', "shuffle", 0),
 	DEF_FO_STR('\0', "playlist_mode", 0),
 	DEF_FO_INT('\0', "bpm", 0),
+	DEF_FO_STR('\0', "rating", 0),
 	DEF_FO_END
 };
 
@@ -572,6 +574,41 @@ static inline void fopt_set_time(struct format_option *fopt, int value, int empt
 	fopt->empty = empty;
 }
 
+static const char* stars_for_rating(uint8_t r)
+{
+	static const char * NO_RATING	= "     ";
+	static const char * ONE_STAR	= "    *";
+	static const char * TWO_STARS	= "   **";
+	static const char * THREE_STARS = "  ***";
+	static const char * FOUR_STARS	= " ****";
+	static const char * FIVE_STARS	= "*****";
+
+	// TODO(sp1ff): make this configurable
+	// 0 => no rating
+	// 1-51 => *
+	// 52-102 => **
+	// 103->153 => ***
+	// 154->204 => ****
+	// 205->255 => *****
+	if (r == 0) {
+		return NO_RATING;
+	}
+	else if (r < 52) {
+		return ONE_STAR;
+	}
+	else if (r < 103) {
+		return TWO_STARS;
+	}
+	else if (r < 154) {
+		return THREE_STARS;
+	}
+	else if (r < 205) {
+		return FOUR_STARS;
+	}
+
+	return FIVE_STARS;
+}
+
 static void fill_track_fopts_track_info(struct track_info *info)
 {
 	char *filename;
@@ -625,6 +662,7 @@ static void fill_track_fopts_track_info(struct track_info *info)
 		fopt_set_str(&track_fopts[TF_FILE], path_basename(filename));
 	}
 	fopt_set_int(&track_fopts[TF_BPM], info->bpm, info->bpm == -1);
+	fopt_set_str(&track_fopts[TF_RATING], stars_for_rating(info->rating));
 }
 
 static int get_album_length(struct album *album)

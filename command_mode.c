@@ -982,6 +982,69 @@ static int add_ti(void *data, struct track_info *ti)
 	return 0;
 }
 
+static int set_rating(void *data, struct track_info *ti)
+{
+	uint8_t *rating = data;
+	d_print("rating %s :=> %d", ti->filename, *rating);
+	ti->rating = *rating;
+	return 0;
+}
+
+static void cmd_rate(char *arg)
+{
+	d_print("arg|lib_cur_track|play_library|cur_view: %p|%p|%d|%d\n", arg, lib_cur_track, play_library, cur_view);
+
+	int flag = parse_one_flag((const char**)&arg, "t");
+	if (flag < 0)
+		return;
+
+	d_print("flag is %c\n", flag);
+
+	char *end;
+	int rating = get_number(arg, &end);
+	// TODO(sp1ff): how to handle `end'?
+	d_print("rating is %d, end is %p\n", rating, end);
+
+	if (0 == rating) {
+		info_msg("Couldn't parse %s as a rating", arg);
+		return;
+	} else if (0 > rating || 255 < rating) {
+		error_msg("%d out of range", rating);
+		return;
+	}
+
+	uint8_t r = (uint8_t) rating;
+
+	if (flag) {
+		if (play_library == 0) {
+			struct simple_track *p = pl_get_playing_track();
+			if (p)
+				set_rating(&r, p->info);
+			else
+				error_msg("no playing track\n");
+		} else if (lib_cur_track)
+			set_rating(&r, lib_cur_track->shuffle_track.simple_track.info);
+		else
+			error_msg("no current track\n");
+	} else {
+		switch (cur_view) {
+		case TREE_VIEW:
+			_tree_for_each_sel(set_rating, &r, 0);
+			break;
+		case SORTED_VIEW:
+			_editable_for_each_sel(&lib_editable, set_rating, &r, 0);
+			break;
+		case PLAYLIST_VIEW:
+			_pl_for_each_sel(set_rating, &r, 0);
+			break;
+		case QUEUE_VIEW:
+			_editable_for_each_sel(&pq_editable, set_rating, &r, 0);
+			break;
+		}
+	}
+
+}
+
 static void cmd_run(char *arg)
 {
 	char **av, **argv;
@@ -2652,6 +2715,7 @@ struct command commands[] = {
 	{ "rand",                  cmd_rand,             0, 0,  NULL,                 0, 0          },
 	{ "quit",                  cmd_quit,             0, 1,  NULL,                 0, 0          },
 	{ "refresh",               cmd_refresh,          0, 0,  NULL,                 0, 0          },
+	{ "rate",                  cmd_rate,             1, 1, NULL,                  0, 0          },
 	{ "run",                   cmd_run,              1, -1, expand_program_paths, 0, CMD_UNSAFE },
 	{ "save",                  cmd_save,             0, 1,  expand_load_save,     0, CMD_UNSAFE },
 	{ "search-b-start",        cmd_search_b_start,   0, 0,  NULL,                 0, 0          },

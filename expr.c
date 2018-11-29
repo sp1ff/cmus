@@ -421,6 +421,7 @@ static const struct {
 	{ 'l',	"album"		},
 	{ 'n',	"tracknumber"	},
 	{ 'X',	"play_count"	},
+	{ 'r',  "rating"        },
 	{ 's',	"stream"	},
 	{ 't',	"title"		},
 	{ 'y',	"date"		},
@@ -431,27 +432,28 @@ static const struct {
 	const char *key;
 	enum expr_type type;
 } builtin[] = {
-	{ "album",	EXPR_STR	},
-	{ "albumartist",EXPR_STR	},
-	{ "artist",	EXPR_STR	},
-	{ "bitrate",	EXPR_INT	},
-	{ "bpm",	EXPR_INT	},
-	{ "codec",	EXPR_STR	},
-	{ "codec_profile",EXPR_STR	},
-	{ "comment",	EXPR_STR	},
-	{ "date",	EXPR_INT	},
-	{ "discnumber", EXPR_INT	},
-	{ "duration",	EXPR_INT	},
-	{ "filename",	EXPR_STR	},
-	{ "genre",	EXPR_STR	},
-	{ "media",	EXPR_STR	},
-	{ "originaldate",EXPR_INT	},
-	{ "play_count", EXPR_INT	},
-	{ "stream",	EXPR_BOOL	},
-	{ "tag",	EXPR_BOOL	},
-	{ "title",	EXPR_STR	},
-	{ "tracknumber",EXPR_INT	},
-	{ NULL,		-1		},
+	{ "album",	   EXPR_STR	},
+	{ "albumartist",   EXPR_STR	},
+	{ "artist",	   EXPR_STR	},
+	{ "bitrate",	   EXPR_INT	},
+	{ "bpm",	   EXPR_INT	},
+	{ "codec",	   EXPR_STR	},
+	{ "codec_profile", EXPR_STR	},
+	{ "comment",	   EXPR_STR	},
+	{ "date",	   EXPR_INT	},
+	{ "discnumber",    EXPR_INT	},
+	{ "duration",	   EXPR_INT	},
+	{ "filename",	   EXPR_STR	},
+	{ "genre",	   EXPR_STR	},
+	{ "media",	   EXPR_STR	},
+	{ "originaldate",  EXPR_INT	},
+	{ "play_count",    EXPR_INT	},
+	{ "rating",        EXPR_INT     },
+	{ "stream",	   EXPR_BOOL	},
+	{ "tag",	   EXPR_BOOL	},
+	{ "title",	   EXPR_STR	},
+	{ "tracknumber",   EXPR_INT	},
+	{ NULL,		   -1		},
 };
 
 static const char *lookup_long_key(char c)
@@ -924,6 +926,8 @@ static int int_val(const char *key, struct track_info *ti)
 		val = ti->play_count;
 	} else if (strcmp(key, "bpm") == 0) {
 		val = ti->bpm;
+	} else if (strcmp(key, "rating") == 0) {
+		val = ti->rating;
 	} else {
 		val = comments_get_int(ti->comments, key);
 	}

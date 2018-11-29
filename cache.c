@@ -38,15 +38,15 @@
 #include <errno.h>
 #include <sys/mman.h>
 
-#define CACHE_VERSION   0x0d
+#define CACHE_VERSION   0x0e
 
 #define CACHE_64_BIT	0x01
 #define CACHE_BE	0x02
 
 #define CACHE_RESERVED_PATTERN  	0xff
 
-#define CACHE_ENTRY_USED_SIZE		28
-#define CACHE_ENTRY_RESERVED_SIZE	52
+#define CACHE_ENTRY_USED_SIZE		29
+#define CACHE_ENTRY_RESERVED_SIZE	51
 #define CACHE_ENTRY_TOTAL_SIZE	(CACHE_ENTRY_RESERVED_SIZE + CACHE_ENTRY_USED_SIZE)
 
 // Cmus Track Cache version X + 4 bytes flags
@@ -63,6 +63,7 @@ struct cache_entry {
 	int32_t duration;
 	int32_t bitrate;
 	int32_t bpm;
+	uint8_t rating;
 
 	// when introducing new fields decrease the reserved space accordingly
 	uint8_t _reserved[CACHE_ENTRY_RESERVED_SIZE];
@@ -121,7 +122,7 @@ static int valid_cache_entry(const struct cache_entry *e, unsigned int avail)
 	return 1;
 }
 
-static struct track_info *cache_entry_to_ti(struct cache_entry *e)
+static struct track_info *cache_entry_to_ti(struct cache_entry *e, char version)
 {
 	const char *strings = e->strings;
 	struct track_info *ti = track_info_new(strings);
@@ -134,6 +135,10 @@ static struct track_info *cache_entry_to_ti(struct cache_entry *e)
 	ti->mtime = e->mtime;
 	ti->play_count = e->play_count;
 	ti->bpm = e->bpm;
+	if (version < 0x0e)
+		ti->rating = 0;
+	else
+		ti->rating = e->rating;
 
 	// count strings (filename + codec + codec_profile + key/val pairs)
 	count = 0;
@@ -231,8 +236,20 @@ static int read_cache(void)
 		return -1;
 	}
 
-	if (memcmp(buf, cache_header, sizeof(cache_header)))
+	if ( (buf[0] != cache_header[0]) ||
+	     (buf[1] != cache_header[1]) ||
+	     (buf[2] != cache_header[2]) ||
+	     (buf[4] != cache_header[4]) ||
+	     (buf[5] != cache_header[5]) ||
+	     (buf[6] != cache_header[6]) ||
+	     (buf[7] != cache_header[7]) )
 		goto corrupt;
+
+	char version = buf[3];
+
+	if (version < CACHE_VERSION) {
+		d_print("attempting cache upgrade from %d to %d...\n", version, CACHE_VERSION);
+	}
 
 	offset = sizeof(cache_header);
 	while (offset < size) {
@@ -242,10 +259,17 @@ static int read_cache(void)
 		if (!valid_cache_entry(e, size - offset))
 			goto corrupt;
 
-		ti = cache_entry_to_ti(e);
+		ti = cache_entry_to_ti(e, version);
+		if (!ti)
+			goto corrupt;
 		add_ti(ti, hash_str(ti->filename));
 		offset += ALIGN(e->size);
 	}
+
+	if (version < CACHE_VERSION) {
+		d_print("attempting cache upgrade from %d to %d...done.\n", version, CACHE_VERSION);
+	}
+
 	munmap(buf, size);
 	close(fd);
 	return 0;
@@ -334,6 +358,7 @@ static void write_ti(int fd, struct gbuf *buf, struct track_info *ti, unsigned i
 	e.mtime = ti->mtime;
 	e.play_count = ti->play_count;
 	e.bpm = ti->bpm;
+	e.rating = ti->rating;
 	len[count] = strlen(ti->filename) + 1;
 	e.size += len[count++];
 	len[count] = (ti->codec ? strlen(ti->codec) : 0) + 1;

@@ -67,6 +67,7 @@ struct track_info {
 
 	int is_va_compilation : 1;
 	int bpm;
+	uint8_t rating;
 };
 
 typedef size_t sort_key_t;
@@ -94,6 +95,7 @@ typedef size_t sort_key_t;
 #define SORT_CODEC_PROFILE 	offsetof(struct track_info, codec_profile)
 #define SORT_MEDIA		offsetof(struct track_info, media)
 #define SORT_BPM		offsetof(struct track_info, bpm)
+#define SORT_RATING             offsetof(struct track_info, rating)
 #define REV_SORT__START		sizeof(struct track_info)
 #define REV_SORT_ARTIST		(REV_SORT__START + offsetof(struct track_info, collkey_artist))
 #define REV_SORT_ALBUM          (REV_SORT__START + offsetof(struct track_info, collkey_album))
@@ -117,6 +119,7 @@ typedef size_t sort_key_t;
 #define REV_SORT_CODEC_PROFILE  (REV_SORT__START + offsetof(struct track_info, codec_profile))
 #define REV_SORT_MEDIA          (REV_SORT__START + offsetof(struct track_info, media))
 #define REV_SORT_BPM            (REV_SORT__START + offsetof(struct track_info, bpm))
+#define REV_SORT_RATING         (REV_SORT__START + offsetof(struct track_info, rating))
 
 #define TI_MATCH_ARTIST       (1 << 0)
 #define TI_MATCH_ALBUM        (1 << 1)

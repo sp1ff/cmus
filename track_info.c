@@ -56,6 +56,7 @@ struct track_info *track_info_new(const char *filename)
 	ti->play_count = 0;
 	ti->comments = NULL;
 	ti->bpm = -1;
+	ti->rating = 0;
 	ti->codec = NULL;
 	ti->codec_profile = NULL;
 
@@ -251,6 +252,9 @@ int track_info_cmp(const struct track_info *a, const struct track_info *b, const
 		case SORT_BITRATE:
 			res = getentry(a, key, long) - getentry(b, key, long);
 			break;
+		case SORT_RATING:
+			res = a->rating - b->rating;
+			break;
 		default:
 			av = getentry(a, key, const char *);
 			bv = getentry(b, key, const char *);
@@ -290,6 +294,7 @@ static const struct {
 	{ "codec_profile",	SORT_CODEC_PROFILE	},
 	{ "media",		SORT_MEDIA		},
 	{ "bpm",		SORT_BPM		},
+	{ "rating",             SORT_RATING             },
 	{ "-artist",		REV_SORT_ARTIST		},
 	{ "-album",		REV_SORT_ALBUM		},
 	{ "-title",		REV_SORT_TITLE		},
@@ -312,6 +317,7 @@ static const struct {
 	{ "-codec_profile",	REV_SORT_CODEC_PROFILE	},
 	{ "-media",		REV_SORT_MEDIA		},
 	{ "-bpm",		REV_SORT_BPM		},
+	{ "-rating",            REV_SORT_RATING         },
 	{ NULL,                 SORT_INVALID            }
 };
 
