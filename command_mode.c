@@ -212,7 +212,10 @@ void view_save(int view, char *arg, int to_stdout, int filtered, int extended)
 		do_save(lib_for_each_ti, arg, dest, save_ti);
 		break;
 	case PLAYLIST_VIEW:
-		pl_save();
+		if (arg)
+			pl_export_selected_pl(arg);
+		else
+			pl_save();
 		break;
 	case QUEUE_VIEW:
 		if (worker_has_job_by_type(JOB_TYPE_QUEUE))
@@ -743,11 +746,13 @@ err:
 static void cmd_quit(char *arg)
 {
 	int flag = parse_flags((const char **)&arg, "i");
+	enum ui_query_answer answer;
 	if (!worker_has_job_by_type(JOB_TYPE_ANY)) {
-		if (flag != 'i' || yes_no_query("Quit cmus? [y/N]"))
+		if (flag != 'i' || yes_no_query("Quit cmus? [y/N]") != UI_QUERY_ANSWER_NO)
 			cmus_running = 0;
 	} else {
-		if (yes_no_query("Tracks are being added. Quit and truncate playlist(s)? [y/N]"))
+		answer = yes_no_query("Tracks are being added. Quit and truncate playlist(s)? [y/N]");
+		if (answer != UI_QUERY_ANSWER_NO)
 			cmus_running = 0;
 	}
 }
@@ -1108,7 +1113,7 @@ static void cmd_run(char *arg)
 
 	run = 1;
 	if (confirm_run && (sel.tis_nr > 1 || strcmp(argv[0], "rm") == 0)) {
-		if (!yes_no_query("Execute %s for the %d selected files? [y/N]", arg, sel.tis_nr)) {
+		if (yes_no_query("Execute %s for the %d selected files? [y/N]", arg, sel.tis_nr) != UI_QUERY_ANSWER_YES) {
 			info_msg("Aborted");
 			run = 0;
 		}
