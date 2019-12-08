@@ -468,6 +468,9 @@ lqueue [NUM]
 mark <filter-expression>
 	Mark tracks in playlist and queue view by using a filter expression.
 
+mute
+	Mutes the sound output.	A second call un-mutes the output.
+
 pl-create <name>
 	Creates a new playlist.
 
@@ -516,12 +519,13 @@ left-view
 right-view
 	Go to view "to the right" of current one, e.g. view 3 -> view 4.
 
-push <text>
+push [text]
 	Enter command mode with the command line pre-set to text. Example:
 
 		bind common w push filter artist=
 
 	Text can contain spaces and even trailing spaces will be honored.
+	If no text is given it defaults to a blank command line.
 	This command can only be bound to a key but not used in the command
 	line directly.
 
@@ -961,6 +965,9 @@ confirm_run (true)
 
 continue (true)
 	Continue playing after current track finishes.
+
+continue_album (true)
+	Continue playing next album after current album finishes.
 
 device (/dev/cdrom)
 	CDDA device file.

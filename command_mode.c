@@ -59,6 +59,7 @@ static struct history cmd_history;
 static char *cmd_history_filename;
 static char *history_search_text = NULL;
 static int arg_expand_cmd = -1;
+static int mute_vol_l = 0, mute_vol_r = 0;
 
 /* view {{{ */
 
@@ -1264,6 +1265,31 @@ err:
 	return -1;
 }
 
+static void cmd_mute(char *arg)
+{
+	int l = 0, r = 0;
+
+	if (volume_l == 0 && volume_r == 0) {
+		// unmute
+		l = mute_vol_l;
+		r = mute_vol_r;
+	} else {
+		mute_vol_l = volume_l;
+		mute_vol_r = volume_r;
+	}
+
+	int rc = player_set_vol(l, 0, r, 0);
+	if (rc != OP_ERROR_SUCCESS) {
+		char *msg = op_get_error_msg(rc, "can't change volume");
+		error_msg("%s", msg);
+		free(msg);
+	} else {
+		mpris_volume_changed();
+	}
+	update_statusline();
+}
+
+
 /*
  * :vol value [value]
  *
@@ -1405,7 +1431,8 @@ static void cmd_view(char *arg)
 
 static void cmd_push(char *arg)
 {
-	cmdline_set_text(arg);
+	if (arg)
+		cmdline_set_text(arg);
 	enter_command_mode();
 }
 
@@ -2699,6 +2726,7 @@ struct command commands[] = {
 	{ "load",                  cmd_load,             1, 1,  expand_load_save,     0, 0          },
 	{ "lqueue",                cmd_lqueue,           0, 1,  NULL,                 0, 0          },
 	{ "mark",                  cmd_mark,             0, 1,  NULL,                 0, 0          },
+	{ "mute",                  cmd_mute,             0, 0,  NULL,                 0, 0          },
 	{ "player-next",           cmd_p_next,           0, 0,  NULL,                 0, 0          },
 	{ "player-pause",          cmd_p_pause,          0, 0,  NULL,                 0, 0          },
 	{ "player-pause-playback", cmd_p_pause_playback, 0, 0,  NULL,                 0, 0          },
@@ -2714,7 +2742,7 @@ struct command commands[] = {
 	{ "pl-import",             cmd_pl_import,        0, -1, NULL,                 0, 0          },
 	{ "pl-reload",             cmd_pl_reload,        0, 0,  NULL,                 0, 0          },
 	{ "pl-rename",             cmd_pl_rename,        1, -1, NULL,                 0, 0          },
-	{ "push",                  cmd_push,             1, -1, expand_commands,      0, 0          },
+	{ "push",                  cmd_push,             0, -1, expand_commands,      0, 0          },
 	{ "pwd",                   cmd_pwd,              0, 0,  NULL,                 0, 0          },
 	{ "raise-vte",             cmd_raise_vte,        0, 0,  NULL,                 0, 0          },
 	{ "rand",                  cmd_rand,             0, 0,  NULL,                 0, 0          },
