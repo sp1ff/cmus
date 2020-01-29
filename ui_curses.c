@@ -469,7 +469,8 @@ static void dump_print_buffer(int row, int col)
  */
 static int format_str(char *buf, const char *str, int width)
 {
-	int s = 0, d = 0, ellipsis_pos = 0, cut_double_width = 0;
+	int s = 0, ellipsis_pos = 0, cut_double_width = 0;
+	size_t d = 0;
 
 	while (1) {
 		uchar u;
@@ -1275,7 +1276,8 @@ static void dump_buffer(const char *buffer)
 static void do_update_commandline(void)
 {
 	char *str;
-	int w, idx;
+	int w;
+	size_t idx;
 	char ch;
 
 	move(LINES - 1, 0);
